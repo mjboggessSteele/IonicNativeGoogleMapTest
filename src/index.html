@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <title>Ionic App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="format-detection" content="telephone=no">
+  <meta name="msapplication-tap-highlight" content="no">
+
+  <link rel="icon" type="image/x-icon" href="assets/icon/favicon.ico">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#4e8ef7">
+
+  <!-- cordova.js required for cordova apps -->
+  <script src="cordova.js"></script>
+
+  <script type="text/javascript">
+      var map;
+      var watchId;
+      var myPositionMarker = undefined;
+
+      document.addEventListener("deviceready", function() {
+        var div = document.getElementById("map_canvas");
+
+        // Initialize the map view
+        map = plugin.google.maps.Map.getMap(div);
+
+        // Wait until the map is ready status.
+        map.addEventListener(plugin.google.maps.event.MAP_READY, onMapReady);
+      }, false);
+
+      function onMapReady() {
+        //var button = document.getElementById("button");
+        //button.addEventListener("click", onBtnClicked, false);
+        var getPosButton = document.getElementById("getPos");
+        getPosButton.addEventListener("click", findPosition, false);
+      }
+
+      function onWatchSuccess (position) {
+        var bearing = 0;
+
+        if(position.coords.bearing != undefined) bearing = position.coords.bearing;
+
+        var msg = ["Current your location:",
+          "latitude:" + position.coords.latitude,
+          "longitude:" + position.coords.longitude,
+          "speed:" + (position.coords.speed > 0 ? position.coords.speed * 2.237 : "0")].join("\n");
+
+          if(myPositionMarker != undefined) myPositionMarker.remove();
+
+          var myLocation = new plugin.google.maps.LatLng(position.coords.latitude,position.coords.longitude);
+
+          map.addMarker({
+            'position': myLocation,
+            'title': msg
+            }, function(marker) {
+              marker.showInfoWindow();
+              myPositionMarker = marker;
+          });
+
+          map.moveCamera({
+            'target': myLocation,
+            'tilt': 0,
+            'zoom': 15,
+            'bearing': bearing
+            }, function() {
+              console.log("Camera position changed.");
+          });
+      }
+
+      function onWatchError (error) {
+          alert(error);
+      }
+
+      function findPosition() {
+        map.getMyLocation(function(location) {
+          var msg = ["Your location:",
+            "latitude:" + location.latLng.lat,
+            "longitude:" + location.latLng.lng,
+            "speed:" + (location.speed > 0 ? location.speed * 2.237 : "0")].join("\n");
+/*
+,
+"time:" + location.time,
+"bearing:" + location.bearing
+*/
+            if(myPositionMarker != undefined) myPositionMarker.remove();
+
+          map.addMarker({
+            'position': location.latLng,
+            'title': msg
+          }, function(marker) {
+            marker.showInfoWindow();
+            myPositionMarker = marker;
+          });
+
+          var myLocation = new plugin.google.maps.LatLng(location.latLng.lat,location.latLng.lng);
+
+              map.moveCamera({
+                'target': myLocation,
+                'tilt': 0,
+                'zoom': 15,
+                'bearing': 0
+              }, function() {
+                console.log("Camera position changed.");
+              });
+
+            });
+
+
+            watchId = navigator.geolocation.watchPosition(onWatchSuccess, onWatchError, { timeout: 5000,maximumAge: 3000, enableHighAccuracy: true });
+
+            var GeoMarker = new GeolocationMarker(map);
+        }
+
+
+      </script>
+
+  <!-- un-comment this code to enable service worker
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js')
+        .then(() => console.log('service worker installed'))
+        .catch(err => console.log('Error', err));
+    }
+  </script>-->
+
+  <link href="build/main.css" rel="stylesheet">
+
+</head>
+<body>
+
+  <!-- Ionic's root component and where the app will load -->
+  <ion-app></ion-app>
+
+  <!-- The polyfills js is generated during the build process -->
+  <script src="build/polyfills.js"></script>
+
+  <!-- The bundle js is generated during the build process -->
+  <script src="build/main.js"></script>
+
+</body>
+</html>
